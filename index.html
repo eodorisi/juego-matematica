@@ -1,7 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="es">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>La aventura del valor posicional</title>
@@ -685,6 +689,7 @@ body {
 }
 
 </style>
+
 </head>
 
 <body>
@@ -762,6 +767,7 @@ body {
 
   <img
     class="mateo"
+    id="mateo"
     src="assets/personajes/mateo/mateo-senalando.png"
     alt="Mateo"
   >
@@ -833,6 +839,9 @@ const botonContinuar =
 const panelMision =
   document.getElementById("panelMision");
 
+const mateo =
+  document.getElementById("mateo");
+
 const digitos =
   document.querySelectorAll(".digito");
 
@@ -871,6 +880,9 @@ botonContinuar.addEventListener(
 
       setTimeout(function () {
 
+        mateo.src =
+          "assets/personajes/mateo/mateo-sorprendido.png";
+
         juego.classList.add("averia");
 
       },500);
@@ -888,6 +900,9 @@ botonContinuar.addEventListener(
       },2200);
 
       setTimeout(function () {
+
+        mateo.src =
+          "assets/personajes/mateo/mateo-preocupado.png";
 
         textoDialogo.textContent =
           "¡Oh, no! Los números han perdido su lugar.";
@@ -1345,6 +1360,9 @@ function completarMision() {
     "visible"
   );
 
+  mateo.src =
+    "assets/personajes/mateo/mateo-celebrando.png";
+
   textoDialogo.textContent =
     "¡Lo lograste! El número 2456 ha recuperado su orden.";
 
@@ -1362,4 +1380,5 @@ function completarMision() {
 </script>
 
 </body>
+
 </html>
