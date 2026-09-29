@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>La aventura del valor posicional</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background: #101b2d;
+}
+
+.juego {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* =========================================
+   FONDO
+========================================= */
+
+.fondo {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+
+  z-index: 1;
+
+  user-select: none;
+  pointer-events: none;
+}
+
+/* =========================================
+   DESTELLO
+========================================= */
+
+.flash {
+  position: absolute;
+  inset: 0;
+
+  z-index: 7;
+
+  background: rgba(255,235,120,0);
+
+  pointer-events: none;
+}
+
+.juego.averia .flash {
+  animation: destello .22s ease-in-out 4;
+}
+
+@keyframes destello {
+
+  0% {
+    background: rgba(255,235,120,0);
+  }
+
+  50% {
+    background: rgba(255,235,120,.23);
+  }
+
+  100% {
+    background: rgba(255,235,120,0);
+  }
+}
+
+/* =========================================
+   MATEO
+========================================= */
+
+.mateo {
+  position: absolute;
+
+  left: 2%;
+  bottom: 7%;
+
+  height: 58vh;
+  max-height: 570px;
+
+  width: auto;
+
+  object-fit: contain;
+
+  z-index: 9;
+
+  user-select: none;
+  pointer-events: none;
+
+  filter:
+    drop-shadow(0 10px 8px rgba(0,0,0,.18))
+    drop-shadow(0 18px 18px rgba(0,0,0,.15));
+}
+
+/* =========================================
+   DÍGITOS
+========================================= */
+
+.digito {
+  position: absolute;
+
+  top: 49%;
+
+  transform: translate(-50%,-50%);
+
+  z-index: 12;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 8vw;
+  height: 15vh;
+
+  font-size: clamp(64px,7vw,115px);
+  font-weight: 900;
+
+  color: white;
+
+  text-shadow:
+    0 4px 0 rgba(0,0,0,.18),
+    0 0 12px rgba(255,255,255,.65),
+    0 7px 18px rgba(0,0,0,.28);
+
+  user-select: none;
+
+  transition:
+    left 1.05s cubic-bezier(.2,.8,.2,1),
+    top 1.05s cubic-bezier(.2,.8,.2,1),
+    width .7s ease,
+    height .7s ease,
+    font-size .7s ease,
+    background .7s ease,
+    border .7s ease,
+    border-radius .7s ease,
+    box-shadow .7s ease,
+    transform 1.05s cubic-bezier(.2,.8,.2,1);
+}
+
+/* POSICIONES INICIALES */
+
+.digito-2 {
+  left: 33.5%;
+}
+
+.digito-4 {
+  left: 44.8%;
+}
+
+.digito-5 {
+  left: 56%;
+}
+
+.digito-6 {
+  left: 67.2%;
+}
+
+/* =========================================
+   FICHAS FUERA DE LA MÁQUINA
+========================================= */
+
+.juego.numeros-fuera .digito:not(.colocado) {
+
+  width: 92px;
+  height: 92px;
+
+  font-size: 58px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20,55,98,.97),
+      rgba(7,25,52,.98)
+    );
+
+  border: 4px solid #ffd85a;
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,.20),
+    0 0 22px rgba(255,216,90,.75),
+    0 14px 24px rgba(0,0,0,.38);
+
+  text-shadow:
+    0 3px 4px rgba(0,0,0,.35);
+}
+
+/* POSICIONES DESORDENADAS */
+
+.juego.numeros-fuera .digito-2:not(.colocado) {
+  left: 24%;
+  top: 35%;
+
+  transform:
+    translate(-50%,-50%)
+    rotate(-8deg);
+}
+
+.juego.numeros-fuera .digito-4:not(.colocado) {
+  left: 40%;
+  top: 19%;
+
+  transform:
+    translate(-50%,-50%)
+    rotate(7deg);
+}
+
+.juego.numeros-fuera .digito-5:not(.colocado) {
+  left: 76%;
+  top: 21%;
+
+  transform:
+    translate(-50%,-50%)
+    rotate(-6deg);
+}
+
+.juego.numeros-fuera .digito-6:not(.colocado) {
+  left: 87%;
+  top: 48%;
+
+  transform:
+    translate(-50%,-50%)
+    rotate(8deg);
+}
+
+/* =========================================
+   FICHAS ACTIVAS
+========================================= */
+
+.juego.mision-activa .digito:not(.colocado) {
+  cursor: grab;
+  animation: flotacion 2s ease-in-out infinite;
+}
+
+.juego.mision-activa .digito:not(.colocado):hover {
+
+  box-shadow:
+    0 0 0 5px rgba(255,255,255,.30),
+    0 0 32px rgba(255,216,90,.95),
+    0 16px 28px rgba(0,0,0,.42);
+}
+
+.juego.mision-activa .digito.arrastrando {
+
+  cursor: grabbing;
+
+  animation: none;
+
+  transition: none;
+
+  transform:
+    translate(-50%,-50%)
+    scale(1.12);
+
+  z-index: 50;
+
+  box-shadow:
+    0 0 0 6px rgba(255,255,255,.4),
+    0 0 38px rgba(255,216,90,1),
+    0 20px 35px rgba(0,0,0,.45);
+}
+
+@keyframes flotacion {
+
+  0%,
+  100% {
+    margin-top: 0;
+  }
+
+  50% {
+    margin-top: -7px;
+  }
+}
+
+/* =========================================
+   ZONAS DE DESTINO
+========================================= */
+
+.zona-destino {
+  position: absolute;
+
+  top: 40.5%;
+
+  height: 25%;
+
+  z-index: 6;
+
+  border-radius: 25px;
+
+  pointer-events: none;
+
+  transition:
+    background .2s ease,
+    box-shadow .2s ease;
+}
+
+.zona-um {
+  left: 28.7%;
+  width: 9.5%;
+}
+
+.zona-c {
+  left: 40%;
+  width: 9.5%;
+}
+
+.zona-d {
+  left: 51.2%;
+  width: 9.5%;
+}
+
+.zona-u {
+  left: 62.5%;
+  width: 9.5%;
+}
+
+.zona-destino.activa {
+
+  background:
+    rgba(255,216,90,.18);
+
+  box-shadow:
+    inset 0 0 0 5px rgba(255,229,125,.9),
+    0 0 28px rgba(255,216,90,.7);
+}
+
+/* =========================================
+   NÚMERO COLOCADO CORRECTAMENTE
+========================================= */
+
+.digito.colocado {
+
+  width: 8vw;
+  height: 15vh;
+
+  background: transparent;
+
+  border: none;
+
+  border-radius: 0;
+
+  box-shadow: none;
+
+  font-size: clamp(64px,7vw,115px);
+
+  transform: translate(-50%,-50%);
+
+  cursor: default;
+
+  animation: entradaCorrecta .5s ease;
+}
+
+@keyframes entradaCorrecta {
+
+  0% {
+    transform:
+      translate(-50%,-50%)
+      scale(1.35);
+  }
+
+  60% {
+    transform:
+      translate(-50%,-50%)
+      scale(.92);
+  }
+
+  100% {
+    transform:
+      translate(-50%,-50%)
+      scale(1);
+  }
+}
+
+/* =========================================
+   ERROR
+========================================= */
+
+.digito.error {
+  animation: errorFicha .35s ease !important;
+}
+
+@keyframes errorFicha {
+
+  0% {
+    transform:
+      translate(-50%,-50%)
+      translateX(0);
+  }
+
+  25% {
+    transform:
+      translate(-50%,-50%)
+      translateX(-12px);
+  }
+
+  50% {
+    transform:
+      translate(-50%,-50%)
+      translateX(12px);
+  }
+
+  75% {
+    transform:
+      translate(-50%,-50%)
+      translateX(-8px);
+  }
+
+  100% {
+    transform:
+      translate(-50%,-50%)
+      translateX(0);
+  }
+}
+
+/* =========================================
+   VIBRACIÓN
+========================================= */
+
+.juego.averia .fondo {
+  animation: vibracion .08s linear 9;
+}
+
+@keyframes vibracion {
+
+  0% {
+    transform: translate(0,0);
+  }
+
+  25% {
+    transform: translate(-3px,2px);
+  }
+
+  50% {
+    transform: translate(3px,-2px);
+  }
+
+  75% {
+    transform: translate(-2px,-2px);
+  }
+
+  100% {
+    transform: translate(0,0);
+  }
+}
+
+/* =========================================
+   TÍTULO
+========================================= */
+
+.nombre-juego {
+  position: absolute;
+
+  top: 24px;
+  left: 30px;
+
+  z-index: 15;
+
+  padding: 10px 18px;
+
+  background:
+    rgba(10,27,48,.78);
+
+  color: white;
+
+  border:
+    2px solid rgba(255,255,255,.35);
+
+  border-radius: 14px;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  backdrop-filter: blur(5px);
+
+  box-shadow:
+    0 5px 15px rgba(0,0,0,.15);
+}
+
+/* =========================================
+   PANEL DE MISIÓN
+========================================= */
+
+.panel-mision {
+  position: absolute;
+
+  left: 50%;
+  bottom: 118px;
+
+  transform: translateX(-50%);
+
+  z-index: 55;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  gap: 12px;
+
+  padding: 10px 18px;
+
+  background:
+    rgba(8,25,45,.94);
+
+  border:
+    2px solid rgba(255,216,90,.9);
+
+  border-radius: 16px;
+
+  color: white;
+
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.28),
+    0 0 18px rgba(255,216,90,.18);
+
+  backdrop-filter: blur(6px);
+}
+
+.panel-mision.visible {
+  display: flex;
+}
+
+.mision-etiqueta {
+
+  padding: 6px 9px;
+
+  border-radius: 8px;
+
+  background: #ffd34e;
+  color: #25354a;
+
+  font-size: 12px;
+  font-weight: 900;
+
+  letter-spacing: 1px;
+}
+
+.mision-texto {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.mision-numero {
+  font-size: 29px;
+  font-weight: 900;
+
+  color: #ffd85a;
+
+  letter-spacing: 2px;
+}
+
+/* =========================================
+   DIÁLOGO
+========================================= */
+
+.dialogo {
+  position: absolute;
+
+  left: 50%;
+  bottom: 28px;
+
+  transform: translateX(-50%);
+
+  width:
+    min(900px,calc(100% - 50px));
+
+  padding: 18px 24px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content:
+    space-between;
+
+  gap: 25px;
+
+  z-index: 60;
+
+  background:
+    rgba(8,25,45,.92);
+
+  color: white;
+
+  border:
+    2px solid rgba(255,255,255,.35);
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.3);
+
+  backdrop-filter: blur(7px);
+}
+
+.texto-dialogo {
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+/* =========================================
+   BOTÓN
+========================================= */
+
+.boton-continuar {
+
+  flex-shrink: 0;
+
+  border: none;
+
+  border-radius: 12px;
+
+  padding: 13px 22px;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  background: #ffd34e;
+
+  color: #25354a;
+
+  cursor: pointer;
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+.boton-continuar:hover {
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 5px 12px rgba(0,0,0,.25);
+}
+
+.boton-continuar:disabled {
+
+  opacity: .55;
+
+  cursor: default;
+
+  transform: none;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width:900px) {
+
+  .mateo {
+    height: 48vh;
+    left: -3%;
+    bottom: 12%;
+  }
+
+  .juego.numeros-fuera
+  .digito:not(.colocado) {
+
+    width: 72px;
+    height: 72px;
+
+    font-size: 45px;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<main
+  class="juego"
+  id="juego"
+>
+
+  <!-- FONDO -->
+
+  <img
+    class="fondo"
+    src="assets/fondos/maquina-valor-posicional.png"
+    alt="Máquina de valor posicional"
+  >
+
+  <!-- DESTELLO -->
+
+  <div class="flash"></div>
+
+  <!-- ZONAS DE DESTINO -->
+
+  <div
+    class="zona-destino zona-um"
+    data-zona="UM"
+  ></div>
+
+  <div
+    class="zona-destino zona-c"
+    data-zona="C"
+  ></div>
+
+  <div
+    class="zona-destino zona-d"
+    data-zona="D"
+  ></div>
+
+  <div
+    class="zona-destino zona-u"
+    data-zona="U"
+  ></div>
+
+  <!-- NÚMEROS -->
+
+  <div
+    class="digito digito-2"
+    data-correcto="UM"
+  >
+    2
+  </div>
+
+  <div
+    class="digito digito-4"
+    data-correcto="C"
+  >
+    4
+  </div>
+
+  <div
+    class="digito digito-5"
+    data-correcto="D"
+  >
+    5
+  </div>
+
+  <div
+    class="digito digito-6"
+    data-correcto="U"
+  >
+    6
+  </div>
+
+  <!-- MATEO -->
+
+  <img
+    class="mateo"
+    src="assets/personajes/mateo/mateo-senalando.png"
+    alt="Mateo"
+  >
+
+  <!-- TÍTULO -->
+
+  <div class="nombre-juego">
+    La aventura del valor posicional
+  </div>
+
+  <!-- PANEL DE MISIÓN -->
+
+  <div
+    class="panel-mision"
+    id="panelMision"
+  >
+
+    <span class="mision-etiqueta">
+      TU MISIÓN
+    </span>
+
+    <span class="mision-texto">
+      Reconstruye el número
+    </span>
+
+    <strong class="mision-numero">
+      2456
+    </strong>
+
+  </div>
+
+  <!-- DIÁLOGO -->
+
+  <div class="dialogo">
+
+    <div
+      class="texto-dialogo"
+      id="textoDialogo"
+    >
+      Todo parecía funcionar perfectamente en el Centro del Orden Numérico...
+    </div>
+
+    <button
+      class="boton-continuar"
+      id="botonContinuar"
+    >
+      Continuar →
+    </button>
+
+  </div>
+
+</main>
+
+<script>
+
+/* =========================================
+   ELEMENTOS PRINCIPALES
+========================================= */
+
+const juego =
+  document.getElementById("juego");
+
+const textoDialogo =
+  document.getElementById("textoDialogo");
+
+const botonContinuar =
+  document.getElementById("botonContinuar");
+
+const panelMision =
+  document.getElementById("panelMision");
+
+const digitos =
+  document.querySelectorAll(".digito");
+
+const zonas =
+  document.querySelectorAll(".zona-destino");
+
+let escena = 0;
+
+let fichaActiva = null;
+
+let offsetX = 0;
+let offsetY = 0;
+
+let posicionesOriginales = {};
+
+let colocados = 0;
+
+/* =========================================
+   HISTORIA
+========================================= */
+
+botonContinuar.addEventListener(
+  "click",
+  function () {
+
+    /* AVERÍA */
+
+    if (escena === 0) {
+
+      escena = 1;
+
+      textoDialogo.textContent =
+        "Pero de pronto... algo comenzó a fallar.";
+
+      botonContinuar.disabled = true;
+
+      setTimeout(function () {
+
+        juego.classList.add("averia");
+
+      },500);
+
+      setTimeout(function () {
+
+        juego.classList.add("numeros-fuera");
+
+      },1250);
+
+      setTimeout(function () {
+
+        juego.classList.remove("averia");
+
+      },2200);
+
+      setTimeout(function () {
+
+        textoDialogo.textContent =
+          "¡Oh, no! Los números han perdido su lugar.";
+
+        botonContinuar.textContent =
+          "Ayudar a Mateo →";
+
+        botonContinuar.disabled = false;
+
+      },2600);
+    }
+
+    /* PRESENTACIÓN DE LA MISIÓN */
+
+    else if (escena === 1) {
+
+      escena = 2;
+
+      textoDialogo.textContent =
+        "Necesitamos devolver las cifras a sus posiciones correctas.";
+
+      botonContinuar.textContent =
+        "Comenzar misión →";
+    }
+
+    /* COMENZAR JUEGO */
+
+    else if (escena === 2) {
+
+      escena = 3;
+
+      iniciarMision();
+    }
+
+  }
+);
+
+/* =========================================
+   INICIAR MISIÓN
+========================================= */
+
+function iniciarMision() {
+
+  juego.classList.add(
+    "mision-activa"
+  );
+
+  panelMision.classList.add(
+    "visible"
+  );
+
+  textoDialogo.textContent =
+    "Arrastra cada cifra hasta la posición que le corresponde.";
+
+  botonContinuar.style.display =
+    "none";
+
+  /* Guardamos dónde estaba cada ficha */
+
+  digitos.forEach(function (digito) {
+
+    const rect =
+      digito.getBoundingClientRect();
+
+    posicionesOriginales[
+      digito.textContent.trim()
+    ] = {
+
+      left:
+        rect.left +
+        rect.width / 2,
+
+      top:
+        rect.top +
+        rect.height / 2
+    };
+
+  });
+
+}
+
+/* =========================================
+   COMENZAR A ARRASTRAR
+========================================= */
+
+digitos.forEach(function (digito) {
+
+  digito.addEventListener(
+    "pointerdown",
+    comenzarArrastre
+  );
+
+});
+
+function comenzarArrastre(evento) {
+
+  if (
+    !juego.classList.contains(
+      "mision-activa"
+    )
+  ) {
+    return;
+  }
+
+  if (
+    evento.currentTarget.classList.contains(
+      "colocado"
+    )
+  ) {
+    return;
+  }
+
+  fichaActiva =
+    evento.currentTarget;
+
+  fichaActiva.classList.add(
+    "arrastrando"
+  );
+
+  const rect =
+    fichaActiva.getBoundingClientRect();
+
+  offsetX =
+    evento.clientX -
+    (
+      rect.left +
+      rect.width / 2
+    );
+
+  offsetY =
+    evento.clientY -
+    (
+      rect.top +
+      rect.height / 2
+    );
+
+  fichaActiva.setPointerCapture(
+    evento.pointerId
+  );
+
+  document.addEventListener(
+    "pointermove",
+    moverFicha
+  );
+
+  document.addEventListener(
+    "pointerup",
+    terminarArrastre
+  );
+
+}
+
+/* =========================================
+   MOVER FICHA
+========================================= */
+
+function moverFicha(evento) {
+
+  if (!fichaActiva) {
+    return;
+  }
+
+  const juegoRect =
+    juego.getBoundingClientRect();
+
+  const x =
+    evento.clientX -
+    juegoRect.left -
+    offsetX;
+
+  const y =
+    evento.clientY -
+    juegoRect.top -
+    offsetY;
+
+  fichaActiva.style.left =
+    x + "px";
+
+  fichaActiva.style.top =
+    y + "px";
+
+  detectarZona(
+    evento.clientX,
+    evento.clientY
+  );
+
+}
+
+/* =========================================
+   DETECTAR ZONA
+========================================= */
+
+function detectarZona(x,y) {
+
+  zonas.forEach(function (zona) {
+
+    zona.classList.remove(
+      "activa"
+    );
+
+    const rect =
+      zona.getBoundingClientRect();
+
+    if (
+      x >= rect.left &&
+      x <= rect.right &&
+      y >= rect.top &&
+      y <= rect.bottom
+    ) {
+
+      zona.classList.add(
+        "activa"
+      );
+
+    }
+
+  });
+
+}
+
+/* =========================================
+   SOLTAR FICHA
+========================================= */
+
+function terminarArrastre(evento) {
+
+  if (!fichaActiva) {
+    return;
+  }
+
+  document.removeEventListener(
+    "pointermove",
+    moverFicha
+  );
+
+  document.removeEventListener(
+    "pointerup",
+    terminarArrastre
+  );
+
+  let zonaEncontrada = null;
+
+  zonas.forEach(function (zona) {
+
+    const rect =
+      zona.getBoundingClientRect();
+
+    if (
+      evento.clientX >= rect.left &&
+      evento.clientX <= rect.right &&
+      evento.clientY >= rect.top &&
+      evento.clientY <= rect.bottom
+    ) {
+
+      zonaEncontrada = zona;
+
+    }
+
+    zona.classList.remove(
+      "activa"
+    );
+
+  });
+
+  fichaActiva.classList.remove(
+    "arrastrando"
+  );
+
+  if (zonaEncontrada) {
+
+    comprobarRespuesta(
+      fichaActiva,
+      zonaEncontrada
+    );
+
+  }
+
+  else {
+
+    devolverFicha(
+      fichaActiva
+    );
+
+  }
+
+  fichaActiva = null;
+
+}
+
+/* =========================================
+   COMPROBAR RESPUESTA
+========================================= */
+
+function comprobarRespuesta(
+  ficha,
+  zona
+) {
+
+  const respuestaCorrecta =
+    ficha.dataset.correcto;
+
+  const zonaElegida =
+    zona.dataset.zona;
+
+  if (
+    respuestaCorrecta ===
+    zonaElegida
+  ) {
+
+    colocarCorrectamente(
+      ficha,
+      zonaElegida
+    );
+
+  }
+
+  else {
+
+    textoDialogo.textContent =
+      "Ese no es su lugar. Observa el número 2456 e inténtalo otra vez.";
+
+    ficha.classList.add(
+      "error"
+    );
+
+    setTimeout(function () {
+
+      ficha.classList.remove(
+        "error"
+      );
+
+      devolverFicha(
+        ficha
+      );
+
+    },350);
+
+  }
+
+}
+
+/* =========================================
+   COLOCACIÓN CORRECTA
+========================================= */
+
+function colocarCorrectamente(
+  ficha,
+  zona
+) {
+
+  ficha.classList.add(
+    "colocado"
+  );
+
+  ficha.style.top =
+    "49%";
+
+  if (zona === "UM") {
+
+    ficha.style.left =
+      "33.5%";
+
+    textoDialogo.textContent =
+      "¡Correcto! El 2 ocupa la posición de unidades de millar.";
+
+  }
+
+  if (zona === "C") {
+
+    ficha.style.left =
+      "44.8%";
+
+    textoDialogo.textContent =
+      "¡Correcto! El 4 ocupa la posición de centenas.";
+
+  }
+
+  if (zona === "D") {
+
+    ficha.style.left =
+      "56%";
+
+    textoDialogo.textContent =
+      "¡Correcto! El 5 ocupa la posición de decenas.";
+
+  }
+
+  if (zona === "U") {
+
+    ficha.style.left =
+      "67.2%";
+
+    textoDialogo.textContent =
+      "¡Correcto! El 6 ocupa la posición de unidades.";
+
+  }
+
+  colocados++;
+
+  if (colocados === 4) {
+
+    setTimeout(
+      completarMision,
+      700
+    );
+
+  }
+
+}
+
+/* =========================================
+   DEVOLVER FICHA
+========================================= */
+
+function devolverFicha(ficha) {
+
+  const numero =
+    ficha.textContent.trim();
+
+  const posicion =
+    posicionesOriginales[numero];
+
+  if (!posicion) {
+    return;
+  }
+
+  ficha.style.transition =
+    "left .45s ease, top .45s ease";
+
+  ficha.style.left =
+    posicion.left + "px";
+
+  ficha.style.top =
+    posicion.top + "px";
+
+  setTimeout(function () {
+
+    ficha.style.transition = "";
+
+  },450);
+
+}
+
+/* =========================================
+   MISIÓN COMPLETADA
+========================================= */
+
+function completarMision() {
+
+  juego.classList.remove(
+    "mision-activa"
+  );
+
+  panelMision.classList.remove(
+    "visible"
+  );
+
+  textoDialogo.textContent =
+    "¡Lo lograste! El número 2456 ha recuperado su orden.";
+
+  botonContinuar.style.display =
+    "block";
+
+  botonContinuar.disabled =
+    false;
+
+  botonContinuar.textContent =
+    "Continuar aventura →";
+
+}
+
+</script>
+
+</body>
+</html>
